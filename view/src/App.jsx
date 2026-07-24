@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { Play, Calendar, CheckCircle2, User, HelpCircle, Activity, Star } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://crex-silk.vercel.app';
 
 function App() {
   const [filter, setFilter] = useState('all'); // 'all' or 'live'
