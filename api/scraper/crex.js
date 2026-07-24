@@ -1,11 +1,35 @@
 import puppeteer from 'puppeteer';
 
+// Helper to launch browser depending on environment (Local vs Serverless/Vercel)
+async function getBrowser() {
+    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    
+    if (isServerless) {
+        console.log("Serverless environment detected. Loading puppeteer-core and @sparticuz/chromium-min...");
+        const { default: puppeteerCore } = await import('puppeteer-core');
+        const { default: chromium } = await import('@sparticuz/chromium-min');
+        
+        // Match version of Chromium release pack to @sparticuz/chromium-min (version 131)
+        const chromiumPackUrl = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar';
+        
+        return await puppeteerCore.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(chromiumPackUrl),
+            headless: chromium.headless,
+        });
+    } else {
+        console.log("Local environment detected. Launching local Puppeteer browser...");
+        return await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+    }
+}
+
 export async function scrapeAllMatches() {
     console.log("Launching browser for scrapeAllMatches...");
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    const browser = await getBrowser();
     
     try {
         const page = await browser.newPage();
@@ -105,10 +129,7 @@ export async function scrapeAllMatches() {
 export async function scrapeMatchDetails(slug) {
     const fullUrl = `https://crex.com/cricket-live-score/${slug}`;
     console.log(`Launching browser for scrapeMatchDetails: ${fullUrl}`);
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    const browser = await getBrowser();
 
     try {
         const page = await browser.newPage();
