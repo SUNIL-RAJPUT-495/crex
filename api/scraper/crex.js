@@ -119,8 +119,12 @@ export async function scrapeMatchDetails(slug) {
             timeout: 60000
         });
 
-        // Wait a few seconds to let any dynamic components load
-        await new Promise(r => setTimeout(r, 4000));
+        // Wait for key selectors to load to ensure Angular has fully rendered
+        try {
+            await page.waitForSelector('.live-score-card, .fixture-page-title, .not-started', { timeout: 12000 });
+        } catch (e) {
+            console.log("Timeout waiting for scorecard or fixture page title, proceeding with evaluate...");
+        }
 
         const parsedData = await page.evaluate((matchSlug) => {
             const liveScoreCard = document.querySelector('.live-score-card');
@@ -175,18 +179,27 @@ export async function scrapeMatchDetails(slug) {
                 targetInfo = liveScoreCard.querySelector('.final-result.comment')?.textContent.trim() || 
                              liveScoreCard.querySelector('.final-result.des-none')?.textContent.trim() || '';
 
-                                // If score is present, check status
-                const isLive = document.querySelector('.liveTag') !== null;
+                // If score is present, check status
                 const finalResultText = document.querySelector('.final-result')?.textContent.trim() || 
                                         document.querySelector('.team-result')?.textContent.trim() || '';
                 
-                if (isLive) {
-                    status = 'LIVE';
-                } else if (finalResultText && finalResultText.length > 3) {
+                const isLiveMatch = document.querySelector('.live-bar') !== null || 
+                                    document.querySelector('.blinking2') !== null ||
+                                    document.querySelector('.team-run-rate') !== null;
+
+                const isFinished = finalResultText.toLowerCase().includes('won') || 
+                                   finalResultText.toLowerCase().includes('abnd') || 
+                                   finalResultText.toLowerCase().includes('abandoned') || 
+                                   finalResultText.toLowerCase().includes('no result') || 
+                                   finalResultText.toLowerCase().includes('tied') || 
+                                   finalResultText.toLowerCase().includes('draw');
+
+                if (isFinished) {
                     status = 'FINISHED';
                     resultMessage = finalResultText;
+                } else if (isLiveMatch) {
+                    status = 'LIVE';
                 } else {
-                    // Check if yet to start
                     status = 'UPCOMING';
                 }
             } else {
