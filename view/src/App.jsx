@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { Play, Calendar, CheckCircle2, User, HelpCircle, Activity, Star } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://crex-silk.vercel.app';
+const IS_VERCEL_ENV = API_BASE_URL.includes('vercel.app');
 
 function App() {
   const [filter, setFilter] = useState('all'); // 'all' or 'live'
@@ -18,6 +19,12 @@ function App() {
 
   // Initialize Socket.io Connection
   useEffect(() => {
+    if (IS_VERCEL_ENV) {
+      console.log('Vercel environment detected: Socket.io is disabled (WebSockets not supported). Falling back to HTTP Polling.');
+      setIsConnected(true); // Treat polling state as connected/active
+      return;
+    }
+
     const socket = io(API_BASE_URL);
     socketRef.current = socket;
 
@@ -48,13 +55,44 @@ function App() {
       });
     });
 
-    // Fetch initial match lists
-    fetchMatches();
-
     return () => {
       socket.disconnect();
     };
   }, []);
+
+  // Fetch matches initially on mount
+  useEffect(() => {
+    fetchMatches();
+  }, []);
+
+  // HTTP Polling Fallback (runs only in Vercel environment)
+  useEffect(() => {
+    if (!IS_VERCEL_ENV) return;
+
+    const interval = setInterval(() => {
+      console.log('HTTP polling: fetching live updates...');
+      fetchMatches();
+
+      if (selectedSlug) {
+        fetchMatchDetailsSilent(selectedSlug);
+      }
+    }, 15000); // Poll every 15 seconds
+
+    return () => clearInterval(interval);
+  }, [selectedSlug]);
+
+  // Fetch match details in background without showing loader
+  const fetchMatchDetailsSilent = async (slug) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/matches/${slug}`);
+      const data = await res.json();
+      if (data.success) {
+        setSelectedDetails(data.data);
+      }
+    } catch (err) {
+      console.error('Error polling match details:', err);
+    }
+  };
 
   // Fetch matches from REST API
   const fetchMatches = async () => {
@@ -148,8 +186,8 @@ function App() {
             <h1>CREX Live Cricket</h1>
           </div>
           <div className="socket-status">
-            <span className={`status-dot ${isConnected ? 'connected' : 'disconnected'}`}></span>
-            {isConnected ? 'Real-time Feed Live' : 'Reconnecting...'}
+            <span className={`status-dot ${(IS_VERCEL_ENV || isConnected) ? 'connected' : 'disconnected'}`}></span>
+            {IS_VERCEL_ENV ? 'Live Updates Active (Polling)' : isConnected ? 'Real-time Feed Live' : 'Reconnecting...'}
           </div>
         </div>
       </header>
