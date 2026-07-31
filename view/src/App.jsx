@@ -5,6 +5,47 @@ import { Play, Calendar, CheckCircle2, User, HelpCircle, Activity, Star } from '
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const IS_VERCEL_ENV = API_BASE_URL.includes('vercel.app');
 
+// Helper to merge and preserve existing logos to avoid flickering fallback to initials
+const mergeDetailsLogos = (newDetails, oldDetails) => {
+  if (!newDetails) return newDetails;
+  if (!oldDetails || newDetails.slug !== oldDetails.slug) return newDetails;
+  
+  const merged = { ...newDetails };
+  
+  // Preserve Team 1 logo
+  if (!merged.team1.logo && oldDetails.team1?.logo) {
+    merged.team1.logo = oldDetails.team1.logo;
+  }
+  // Preserve Team 2 logo
+  if (!merged.team2.logo && oldDetails.team2?.logo) {
+    merged.team2.logo = oldDetails.team2.logo;
+  }
+  
+  // Preserve Batsmen logos
+  if (merged.batsmen && oldDetails.batsmen) {
+    merged.batsmen = merged.batsmen.map(newBat => {
+      const oldBat = oldDetails.batsmen.find(b => b.fullName === newBat.fullName || b.shortName === newBat.shortName);
+      if (oldBat && !newBat.logo && oldBat.logo) {
+        return { ...newBat, logo: oldBat.logo };
+      }
+      return newBat;
+    });
+  }
+  
+  // Preserve Bowlers logos
+  if (merged.bowlers && oldDetails.bowlers) {
+    merged.bowlers = merged.bowlers.map(newBowl => {
+      const oldBowl = oldDetails.bowlers.find(b => b.fullName === newBowl.fullName || b.shortName === newBowl.shortName);
+      if (oldBowl && !newBowl.logo && oldBowl.logo) {
+        return { ...newBowl, logo: oldBowl.logo };
+      }
+      return newBowl;
+    });
+  }
+  
+  return merged;
+};
+
 function App() {
   const [filter, setFilter] = useState('all'); // 'all' or 'live'
   const [allMatches, setAllMatches] = useState([]); // Array of { date, matches }
@@ -41,7 +82,21 @@ function App() {
     // Real-time live matches list update
     socket.on('live-matches-update', (updatedLiveMatches) => {
       console.log('Received live matches update:', updatedLiveMatches);
-      setLiveMatches(updatedLiveMatches);
+      setLiveMatches((curr) => {
+        return updatedLiveMatches.map(newM => {
+          const oldM = curr.find(m => m.matchId === newM.matchId);
+          if (oldM) {
+            const team1Logo = newM.team1.logo || oldM.team1.logo;
+            const team2Logo = newM.team2.logo || oldM.team2.logo;
+            return {
+              ...newM,
+              team1: { ...newM.team1, logo: team1Logo },
+              team2: { ...newM.team2, logo: team2Logo }
+            };
+          }
+          return newM;
+        });
+      });
     });
 
     // Real-time selected match details update
@@ -49,9 +104,9 @@ function App() {
       console.log('Received detailed match update:', updatedDetails.slug);
       setSelectedDetails((curr) => {
         if (curr && curr.slug === updatedDetails.slug) {
-          return updatedDetails;
+          return mergeDetailsLogos(updatedDetails, curr);
         }
-        return curr;
+        return updatedDetails;
       });
     });
 
@@ -87,7 +142,7 @@ function App() {
       const res = await fetch(`${API_BASE_URL}/api/matches/${slug}`);
       const data = await res.json();
       if (data.success) {
-        setSelectedDetails(data.data);
+        setSelectedDetails((curr) => mergeDetailsLogos(data.data, curr));
       }
     } catch (err) {
       console.error('Error polling match details:', err);
@@ -136,7 +191,7 @@ function App() {
       const res = await fetch(`${API_BASE_URL}/api/matches/${slug}`);
       const data = await res.json();
       if (data.success) {
-        setSelectedDetails(data.data);
+        setSelectedDetails((curr) => mergeDetailsLogos(data.data, curr));
       }
     } catch (err) {
       console.error('Error fetching match details:', err);
@@ -391,15 +446,15 @@ function App() {
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                                 <span 
                                   key={val}
-                                  className={`ball-badge ${getBallBadgeClass(val)} ball-pop`}
+                                  className="ball-pop"
                                   style={{
-                                    width: isBall ? 'auto' : '32px',
-                                    height: '32px',
-                                    padding: isBall ? '0 12px' : '0',
-                                    borderRadius: isBall ? '16px' : '50%',
-                                    fontSize: isBall ? '12px' : '14px',
-                                    borderWidth: '2px',
-                                    fontStyle: 'normal'
+                                    fontSize: isBall ? '16px' : '26px',
+                                    fontWeight: '800',
+                                    fontStyle: 'normal',
+                                    color: val.toUpperCase() === 'W' ? 'var(--color-live)' : 
+                                           (val === '4' || val === '6') ? 'var(--color-emerald)' : 
+                                           'var(--text-main)',
+                                    lineHeight: '1.2'
                                   }}
                                 >
                                   {val}

@@ -374,8 +374,7 @@ export async function scrapeMatchDetails(slug) {
                     const ballElements = slide.querySelectorAll('.over-ball');
                     const balls = Array.from(ballElements)
                         .map(b => b.textContent.trim())
-                        .filter(b => b !== '')
-                        .reverse();
+                        .filter(b => b !== '');
                     
                     const text = slide.textContent || '';
                     const overNumMatch = text.match(/Over\s*(\d+)/i);
