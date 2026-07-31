@@ -1,44 +1,106 @@
 import puppeteer from 'puppeteer';
 
+let browserPromise = null;
+
 // Helper to launch browser depending on environment (Local vs Serverless/Vercel)
 async function getBrowser() {
-    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
-    
-    if (isServerless) {
-        console.log("Serverless environment detected. Loading puppeteer-core and @sparticuz/chromium-min...");
-        const { default: puppeteerCore } = await import('puppeteer-core');
-        const { default: chromium } = await import('@sparticuz/chromium-min');
-        
-        // Match version of Chromium release pack to @sparticuz/chromium-min (version 131)
-        const chromiumPackUrl = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar';
-        
-        return await puppeteerCore.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(chromiumPackUrl),
-            headless: chromium.headless,
-        });
-    } else {
-        console.log("Local environment detected. Launching local Puppeteer browser...");
-        return await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+    if (browserPromise) {
+        try {
+            const browser = await browserPromise;
+            if (browser && browser.connected) {
+                return browser;
+            }
+        } catch (e) {
+            console.error("Existing browser promise failed, resetting...", e);
+            browserPromise = null;
+        }
     }
+
+    browserPromise = (async () => {
+        const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+        let browser;
+        
+        if (isServerless) {
+            console.log("Serverless environment detected. Loading puppeteer-core and @sparticuz/chromium-min...");
+            const { default: puppeteerCore } = await import('puppeteer-core');
+            const { default: chromium } = await import('@sparticuz/chromium-min');
+            
+            const chromiumPackUrl = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar';
+            
+            browser = await puppeteerCore.launch({
+                args: [...chromium.args, '--disable-gpu', '--disable-dev-shm-usage'],
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(chromiumPackUrl),
+                headless: chromium.headless,
+            });
+        } else {
+            console.log("Local environment detected. Launching local Puppeteer browser...");
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-gpu',
+                    '--disable-dev-shm-usage',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-accelerated-2d-canvas'
+                ]
+            });
+        }
+
+        browser.on('disconnected', () => {
+            console.log("Puppeteer browser disconnected. Clearing persistent instance promise.");
+            browserPromise = null;
+        });
+
+        return browser;
+    })();
+
+    return browserPromise;
+}
+
+// Helper to set up page level optimizations
+async function setupPageOptimizations(page) {
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+        const resourceType = req.resourceType();
+        const url = req.url();
+        
+        if (
+            resourceType === 'image' ||
+            resourceType === 'font' ||
+            resourceType === 'media' ||
+            url.includes('google-analytics') ||
+            url.includes('doubleclick') ||
+            url.includes('adsystem') ||
+            url.includes('adnxs') ||
+            url.includes('facebook') ||
+            url.includes('optimizely') ||
+            url.includes('hotjar') ||
+            url.includes('amazon-adsystem') ||
+            (url.includes('google') && (url.includes('ads') || url.includes('syndication')))
+        ) {
+            req.abort();
+        } else {
+            req.continue();
+        }
+    });
 }
 
 export async function scrapeAllMatches() {
-    console.log("Launching browser for scrapeAllMatches...");
+    console.log("Fetching persistent browser for scrapeAllMatches...");
     const browser = await getBrowser();
-    
+    let page;
     try {
-        const page = await browser.newPage();
+        page = await browser.newPage();
+        await setupPageOptimizations(page);
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         
         console.log("Navigating to crex.com/schedule...");
         await page.goto('https://crex.com/schedule', {
-            waitUntil: 'networkidle2',
-            timeout: 60000
+            waitUntil: 'domcontentloaded',
+            timeout: 30000
         });
 
         await page.waitForSelector('.date-wise-matches-card', { timeout: 15000 });
@@ -122,22 +184,23 @@ export async function scrapeAllMatches() {
 
         return result;
     } finally {
-        await browser.close();
+        if (page) await page.close();
     }
 }
 
 export async function scrapeMatchDetails(slug) {
     const fullUrl = `https://crex.com/cricket-live-score/${slug}`;
-    console.log(`Launching browser for scrapeMatchDetails: ${fullUrl}`);
+    console.log(`Fetching persistent browser for scrapeMatchDetails: ${fullUrl}`);
     const browser = await getBrowser();
-
+    let page;
     try {
-        const page = await browser.newPage();
+        page = await browser.newPage();
+        await setupPageOptimizations(page);
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         
         await page.goto(fullUrl, {
-            waitUntil: 'networkidle2',
-            timeout: 60000
+            waitUntil: 'domcontentloaded',
+            timeout: 30000
         });
 
         // Wait for key selectors to load to ensure Angular has fully rendered
@@ -358,6 +421,6 @@ export async function scrapeMatchDetails(slug) {
 
         return parsedData;
     } finally {
-        await browser.close();
+        if (page) await page.close();
     }
 }
