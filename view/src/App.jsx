@@ -384,29 +384,29 @@ function App() {
 
                       <div className="detail-vs" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: '60px' }}>
                         {(() => {
-                          if (selectedDetails.status === 'LIVE' && selectedDetails.recentOvers && selectedDetails.recentOvers.length > 0) {
-                            const lastOver = selectedDetails.recentOvers[selectedDetails.recentOvers.length - 1];
-                            if (lastOver && lastOver.balls && lastOver.balls.length > 0) {
-                              const lastBall = lastOver.balls[lastOver.balls.length - 1];
-                              return (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                  <span 
-                                    key={lastBall + '-' + lastOver.balls.length}
-                                    className={`ball-badge ${getBallBadgeClass(lastBall)} ball-pop`}
-                                    style={{
-                                      width: '32px',
-                                      height: '32px',
-                                      fontSize: '14px',
-                                      borderWidth: '2px',
-                                      fontStyle: 'normal'
-                                    }}
-                                  >
-                                    {lastBall}
-                                  </span>
-                                  <span style={{ fontSize: '9px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', fontStyle: 'normal' }}>Last Ball</span>
-                                </div>
-                              );
-                            }
+                          if (selectedDetails.status === 'LIVE' && selectedDetails.result) {
+                            const val = selectedDetails.result.trim();
+                            const isBall = val.toUpperCase() === 'BALL';
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                <span 
+                                  key={val}
+                                  className={`ball-badge ${getBallBadgeClass(val)} ball-pop`}
+                                  style={{
+                                    width: isBall ? 'auto' : '32px',
+                                    height: '32px',
+                                    padding: isBall ? '0 12px' : '0',
+                                    borderRadius: isBall ? '16px' : '50%',
+                                    fontSize: isBall ? '12px' : '14px',
+                                    borderWidth: '2px',
+                                    fontStyle: 'normal'
+                                  }}
+                                >
+                                  {val}
+                                </span>
+                                <span style={{ fontSize: '9px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', fontStyle: 'normal' }}>Status</span>
+                              </div>
+                            );
                           }
                           return 'VS';
                         })()}
@@ -447,7 +447,7 @@ function App() {
                       </div>
                     )}
 
-                    {selectedDetails.result && (
+                    {selectedDetails.status === 'FINISHED' && selectedDetails.result && (
                       <div style={{ textAlign: 'center', fontSize: '15px', fontWeight: '700', color: 'var(--color-emerald)', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', padding: '10px', borderRadius: '6px' }}>
                         {selectedDetails.result}
                       </div>

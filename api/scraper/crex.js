@@ -283,6 +283,9 @@ export async function scrapeMatchDetails(slug) {
                     resultMessage = finalResultText;
                 } else if (isLiveMatch) {
                     status = 'LIVE';
+                    resultMessage = document.querySelector('.team-result .font2')?.textContent.trim() || 
+                                    document.querySelector('.team-result')?.textContent.trim() || 
+                                    'LIVE';
                 } else {
                     status = 'UPCOMING';
                 }
@@ -371,7 +374,8 @@ export async function scrapeMatchDetails(slug) {
                     const ballElements = slide.querySelectorAll('.over-ball');
                     const balls = Array.from(ballElements)
                         .map(b => b.textContent.trim())
-                        .filter(b => b !== '');
+                        .filter(b => b !== '')
+                        .reverse();
                     
                     const text = slide.textContent || '';
                     const overNumMatch = text.match(/Over\s*(\d+)/i);
