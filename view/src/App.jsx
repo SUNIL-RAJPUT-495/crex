@@ -552,7 +552,7 @@ function App() {
                     <div className="card-base recent-overs-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                       <h3 className="section-title" style={{ borderLeftColor: 'var(--color-emerald)' }}><Activity size={16} /> Recent Overs</h3>
                       <div className="timeline-list" style={{ gap: '8px' }}>
-                        {selectedDetails.recentOvers.map((over, idx) => (
+                        {selectedDetails.recentOvers.slice().reverse().map((over, idx) => (
                           <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>Over {over.overNumber}</span>
