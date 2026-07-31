@@ -367,15 +367,13 @@ export async function scrapeMatchDetails(slug) {
 
             // Recent Overs timeline
             const recentOvers = [];
-            const oversTimeline = document.querySelector('.overs-timeline');
             if (oversTimeline) {
                 const slides = oversTimeline.querySelectorAll('.overs-slide');
                 slides.forEach(slide => {
                     const ballElements = slide.querySelectorAll('.over-ball');
                     const balls = Array.from(ballElements)
                         .map(b => b.textContent.trim())
-                        .filter(b => b !== '')
-                        .reverse();
+                        .filter(b => b !== '');
                     
                     const text = slide.textContent || '';
                     const overNumMatch = text.match(/Over\s*(\d+)/i);

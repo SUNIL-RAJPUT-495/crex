@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { Play, Calendar, CheckCircle2, User, HelpCircle, Activity, Star } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5000' 
+    : 'https://cscoreapi.ashtrinox.in');
 const IS_VERCEL_ENV = API_BASE_URL.includes('vercel.app');
 
 // Helper to merge and preserve existing logos to avoid flickering fallback to initials
@@ -608,13 +611,13 @@ function App() {
                       <h3 className="section-title" style={{ borderLeftColor: 'var(--color-emerald)' }}><Activity size={16} /> Recent Overs</h3>
                       <div className="timeline-list" style={{ gap: '8px' }}>
                         {selectedDetails.recentOvers.slice().reverse().map((over, idx) => (
-                          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '16px', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '95px' }}>
                               <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>Over {over.overNumber}</span>
-                              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({over.totalRuns || '0'} runs)</span>
+                              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({over.totalRuns || '0'} r)</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                              {over.balls.map((ball, bIdx) => (
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-start' }}>
+                              {over.balls.slice().reverse().map((ball, bIdx) => (
                                 <span key={bIdx} className={`ball-badge ${getBallBadgeClass(ball)} ball-pop`}>
                                   {ball}
                                 </span>
