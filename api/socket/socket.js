@@ -88,8 +88,8 @@ function startLiveUpdatesLoop() {
                                         batsmen: details.batsmen,
                                         bowlers: details.bowlers,
                                         partnership: details.partnership,
-                                        lastWicket: details.lastWicket,
                                         timeline: details.timeline,
+                                        recentOvers: details.recentOvers,
                                         lastUpdated: new Date()
                                     }
                                 },
@@ -121,5 +121,5 @@ function startLiveUpdatesLoop() {
         } finally {
             isScrapingInProgress = false;
         }
-    }, 15000);
+    }, 4000);
 }

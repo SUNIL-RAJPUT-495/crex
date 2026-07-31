@@ -382,7 +382,35 @@ function App() {
                         )}
                       </div>
 
-                      <div className="detail-vs">VS</div>
+                      <div className="detail-vs" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: '60px' }}>
+                        {(() => {
+                          if (selectedDetails.status === 'LIVE' && selectedDetails.recentOvers && selectedDetails.recentOvers.length > 0) {
+                            const lastOver = selectedDetails.recentOvers[selectedDetails.recentOvers.length - 1];
+                            if (lastOver && lastOver.balls && lastOver.balls.length > 0) {
+                              const lastBall = lastOver.balls[lastOver.balls.length - 1];
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                  <span 
+                                    key={lastBall + '-' + lastOver.balls.length}
+                                    className={`ball-badge ${getBallBadgeClass(lastBall)} ball-pop`}
+                                    style={{
+                                      width: '32px',
+                                      height: '32px',
+                                      fontSize: '14px',
+                                      borderWidth: '2px',
+                                      fontStyle: 'normal'
+                                    }}
+                                  >
+                                    {lastBall}
+                                  </span>
+                                  <span style={{ fontSize: '9px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', fontStyle: 'normal' }}>Last Ball</span>
+                                </div>
+                              );
+                            }
+                          }
+                          return 'VS';
+                        })()}
+                      </div>
 
                       <div className="detail-team-box">
                         {renderTeamLogo(selectedDetails.team2.logo, selectedDetails.team2.name)}
@@ -516,6 +544,30 @@ function App() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Recent Overs Timeline */}
+                  {selectedDetails.status !== 'UPCOMING' && selectedDetails.recentOvers && selectedDetails.recentOvers.length > 0 && (
+                    <div className="card-base recent-overs-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <h3 className="section-title" style={{ borderLeftColor: 'var(--color-emerald)' }}><Activity size={16} /> Recent Overs</h3>
+                      <div className="timeline-list" style={{ gap: '8px' }}>
+                        {selectedDetails.recentOvers.map((over, idx) => (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>Over {over.overNumber}</span>
+                              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({over.totalRuns || '0'} runs)</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              {over.balls.map((ball, bIdx) => (
+                                <span key={bIdx} className={`ball-badge ${getBallBadgeClass(ball)} ball-pop`}>
+                                  {ball}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

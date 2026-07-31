@@ -666,3 +666,22 @@ a {
     height: 400px;
   }
 }
+
+/* Ball Pop Animation */
+.ball-pop {
+  animation: ballPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes ballPop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.3;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

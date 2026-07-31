@@ -362,6 +362,34 @@ export async function scrapeMatchDetails(slug) {
             const pship = document.querySelector('.batsmen-partnership')?.textContent.trim() || '';
             const lastWkt = document.querySelector('.last-wkt, .l-wicket')?.textContent.trim() || '';
 
+            // Recent Overs timeline
+            const recentOvers = [];
+            const oversTimeline = document.querySelector('.overs-timeline');
+            if (oversTimeline) {
+                const slides = oversTimeline.querySelectorAll('.overs-slide');
+                slides.forEach(slide => {
+                    const ballElements = slide.querySelectorAll('.over-ball');
+                    const balls = Array.from(ballElements)
+                        .map(b => b.textContent.trim())
+                        .filter(b => b !== '');
+                    
+                    const text = slide.textContent || '';
+                    const overNumMatch = text.match(/Over\s*(\d+)/i);
+                    const overNumber = overNumMatch ? overNumMatch[1] : '';
+                    
+                    const totalRunsMatch = text.match(/=\s*([\d\w]+)/);
+                    const totalRuns = totalRunsMatch ? totalRunsMatch[1] : '';
+
+                    if (overNumber || balls.length > 0) {
+                        recentOvers.push({
+                            overNumber,
+                            balls,
+                            totalRuns
+                        });
+                    }
+                });
+            }
+
             return {
                 matchId,
                 slug: matchSlug,
@@ -376,6 +404,7 @@ export async function scrapeMatchDetails(slug) {
                 bowlers: activeBowlers,
                 partnership: pship,
                 lastWicket: lastWkt,
+                recentOvers,
                 timeline: []
             };
         }, slug);

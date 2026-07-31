@@ -167,6 +167,7 @@ export async function getMatchDetails(req, res) {
                         partnership: details.partnership,
                         lastWicket: details.lastWicket,
                         timeline: details.timeline,
+                        recentOvers: details.recentOvers,
                         lastUpdated: new Date()
                     }
                 },

@@ -46,6 +46,7 @@ const MatchSchema = new mongoose.Schema({
     partnership: String,
     lastWicket: String,
     timeline: [mongoose.Schema.Types.Mixed],
+    recentOvers: [mongoose.Schema.Types.Mixed],
     lastUpdated: { type: Date, default: Date.now }
 });
 
