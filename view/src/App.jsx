@@ -176,6 +176,32 @@ function App() {
     );
   };
 
+  // Render player avatar
+  const renderPlayerAvatar = (logo, name) => {
+    if (logo && logo.startsWith('http')) {
+      return (
+        <div style={{ position: 'relative', display: 'flex', width: '24px', height: '24px', flexShrink: 0 }}>
+          <img 
+            src={logo} 
+            alt={name} 
+            className="player-avatar" 
+            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+            style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
+          />
+          <div className="player-avatar-placeholder" style={{ display: 'none', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+            {name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?'}
+          </div>
+        </div>
+      );
+    }
+    const initials = name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+    return (
+      <div className="player-avatar-placeholder" style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 'bold', color: 'var(--text-secondary)', flexShrink: 0 }}>
+        {initials}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* App Header */}
@@ -398,6 +424,23 @@ function App() {
                         {selectedDetails.result}
                       </div>
                     )}
+
+                    {(selectedDetails.partnership || selectedDetails.lastWicket) && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '13px' }}>
+                        {selectedDetails.partnership && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: selectedDetails.lastWicket ? '1px solid rgba(255,255,255,0.04)' : 'none', paddingBottom: selectedDetails.lastWicket ? '6px' : '0' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Current Partnership</span>
+                            <span style={{ fontWeight: '600', color: '#fff' }}>{selectedDetails.partnership}</span>
+                          </div>
+                        )}
+                        {selectedDetails.lastWicket && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: selectedDetails.partnership ? '2px' : '0' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Last Wicket</span>
+                            <span style={{ fontWeight: '500', color: 'rgba(255,255,255,0.9)' }}>{selectedDetails.lastWicket}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Active Batsmen & Bowlers Card */}
@@ -421,9 +464,12 @@ function App() {
                               <tbody>
                                 {selectedDetails.batsmen.map((bat, idx) => (
                                   <tr key={idx}>
-                                    <td className="player-name-col">
-                                      {bat.fullName || bat.shortName}
-                                      {bat.onStrike && <Star size={11} className="strike-star" fill="var(--color-gold)" />}
+                                    <td className="player-name-col" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      {renderPlayerAvatar(bat.logo, bat.fullName || bat.shortName)}
+                                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        {bat.fullName || bat.shortName}
+                                        {bat.onStrike && <Star size={11} className="strike-star" fill="var(--color-gold)" />}
+                                      </span>
                                     </td>
                                     <td style={{ textAlign: 'center' }} className="run-highlight">{bat.runs}</td>
                                     <td style={{ textAlign: 'center' }} className="table-muted-text">{bat.balls}</td>
@@ -455,8 +501,9 @@ function App() {
                               <tbody>
                                 {selectedDetails.bowlers.map((bowl, idx) => (
                                   <tr key={idx}>
-                                    <td className="player-name-col">
-                                      {bowl.fullName || bowl.shortName}
+                                    <td className="player-name-col" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      {renderPlayerAvatar(bowl.logo, bowl.fullName || bowl.shortName)}
+                                      <span>{bowl.fullName || bowl.shortName}</span>
                                     </td>
                                     <td style={{ textAlign: 'center' }}>{bowl.overs}</td>
                                     <td style={{ textAlign: 'center' }}>{bowl.runs}</td>

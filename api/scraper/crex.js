@@ -362,45 +362,6 @@ export async function scrapeMatchDetails(slug) {
             const pship = document.querySelector('.batsmen-partnership')?.textContent.trim() || '';
             const lastWkt = document.querySelector('.last-wkt, .l-wicket')?.textContent.trim() || '';
 
-            // 3. Parse commentary timeline
-            const timeline = [];
-            document.querySelectorAll('.comm-wrap .cm-b-roundcard, .comm-wrap .cm-o-overtimelines').forEach((el) => {
-                const isOverSummary = el.classList.contains('cm-o-overtimelines');
-                
-                if (isOverSummary) {
-                    const overHead = el.querySelector('.cm-o-head')?.textContent.trim().replace(/\s+/g, ' ') || '';
-                    const batsmen = [];
-                    el.querySelectorAll('.cm-o-batsman').forEach((batEl) => {
-                        batsmen.push({
-                            name: batEl.querySelector('.cm-o-batsman-name')?.textContent.trim() || '',
-                            score: batEl.querySelector('.cm-o-batsman-score')?.textContent.trim() || ''
-                        });
-                    });
-                    const bowlerName = el.querySelector('.cm-o-bowler-name')?.textContent.trim() || '';
-                    const bowlerStats = el.querySelector('.cm-o-bowler-stats')?.textContent.trim() || '';
-
-                    timeline.push({
-                        type: 'OVER_SUMMARY',
-                        heading: overHead,
-                        batsmen,
-                        bowler: { name: bowlerName, stats: bowlerStats }
-                    });
-                } else {
-                    const over = el.querySelector('.cm-b-over')?.textContent.trim() || '';
-                    const update = el.querySelector('.cm-b-ballupdate')?.textContent.trim() || '';
-                    const commText = el.querySelector('.cm-b-comment-c1')?.textContent.trim() || '';
-                    const detailText = el.querySelector('.cm-b-comment-c2')?.textContent.trim() || '';
-
-                    timeline.push({
-                        type: 'BALL',
-                        over,
-                        result: update,
-                        commentary: commText,
-                        details: detailText
-                    });
-                }
-            });
-
             return {
                 matchId,
                 slug: matchSlug,
@@ -415,7 +376,7 @@ export async function scrapeMatchDetails(slug) {
                 bowlers: activeBowlers,
                 partnership: pship,
                 lastWicket: lastWkt,
-                timeline
+                timeline: []
             };
         }, slug);
 
